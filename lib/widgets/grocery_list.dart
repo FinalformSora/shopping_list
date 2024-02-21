@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -16,6 +17,7 @@ class GroceryList extends StatefulWidget {
 class _GroceryListState extends State<GroceryList> {
   List<GroceryItem> _groceryItems = [];
   var _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -24,9 +26,18 @@ class _GroceryListState extends State<GroceryList> {
   }
 
   void _loadItems() async {
-    final url = Uri.https(
-        'flutter-prep-876c1-default-rtdb.firebaseio.com', 'shopping-list.json');
+    final url = Uri.https('adcflutter-prep-876c1-default-rtdb.firebaseio.com',
+        'shopping-list.json');
     final response = await http.get(url);
+
+    if (response.statusCode >= 400) {
+      setState(() {
+        _isLoading = false;
+        _error = 'Failed to load data, please try again later.';
+      });
+      return;
+    }
+
     print(response.body);
     final Map<String, dynamic> listData = json.decode(response.body);
     final List<GroceryItem> loadedItems = [];
@@ -102,6 +113,10 @@ class _GroceryListState extends State<GroceryList> {
     } else if (_isLoading) {
       content = const Center(
         child: CircularProgressIndicator(),
+      );
+    } else if (_error != null) {
+      content = Center(
+        child: Text(_error!),
       );
     } else {
       content = const Center(
